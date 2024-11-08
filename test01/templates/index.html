@@ -1,0 +1,123 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>File Analysis</title>
+    <style>
+        /* 기본 스타일 */
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f6f9; }
+        .container { max-width: 600px; margin: 50px auto; background-color: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
+        
+        /* 제목 스타일 */
+        h1 { color: #34495e; font-size: 24px; text-align: center; }
+        
+        /* 섹션 스타일 */
+        .section { margin-bottom: 20px; }
+        label { font-size: 16px; color: #34495e; font-weight: 500; display: block; margin-bottom: 10px; }
+        
+        /* 파일 입력 및 버튼 스타일 */
+        input[type="file"] { padding: 8px; border-radius: 4px; border: 1px solid #d1d1d1; width: 100%; box-sizing: border-box; }
+        button {
+            display: inline-block;
+            width: 100%;
+            padding: 12px;
+            background-color: #3498db;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 10px;
+        }
+        button:hover { background-color: #2980b9; }
+
+        /* 결과 영역 스타일 */
+        .result-container { display: none; margin-top: 20px; }
+        h2 { font-size: 20px; color: #34495e; border-bottom: 2px solid #3498db; padding-bottom: 5px; }
+        h3 { font-size: 16px; color: #2c3e50; margin-top: 20px; }
+        p, pre { background: #ecf0f1; padding: 12px; border-radius: 5px; font-size: 14px; color: #2c3e50; }
+        pre { overflow-x: auto; white-space: pre-wrap; word-wrap: break-word; }
+
+        /* 메시지 색상 */
+        .error-message { color: #e74c3c; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>File Analysis</h1>
+        <form id="uploadForm" enctype="multipart/form-data">
+            <div class="section">
+                <label for="fileInput">Upload a file to analyze:</label>
+                <input type="file" id="fileInput" name="file" required>
+            </div>
+            <button type="button" onclick="submitForm()">Analyze File</button>
+        </form>
+
+        <!-- 분석 결과가 표시될 영역 -->
+        <div id="resultContainer" class="result-container">
+            <h2>Analysis Result</h2>
+
+            <!-- 전체 JSON 데이터 표시 -->
+            <div class="section">
+                <h3>Full JSON Result</h3>
+                <pre id="fullJsonResult"></pre>
+            </div>
+
+            <div class="section">
+                <h3>Dynamic Analysis</h3>
+                <p id="dynamicMessage"></p>
+            </div>
+
+            <div class="section">
+                <h3>Emulator Detection</h3>
+                <p id="isEmulator"></p>
+            </div>
+
+            <div class="section">
+                <h3>Static Analysis</h3>
+                <p id="fileHash"></p>
+                <p id="fileSize"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function submitForm() {
+            const formData = new FormData();
+            const fileInput = document.getElementById("fileInput");
+
+            if (fileInput.files.length === 0) {
+                alert("Please select a file.");
+                return;
+            }
+
+            formData.append("file", fileInput.files[0]);
+
+            fetch('/api/analyze', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                const resultContainer = document.getElementById("resultContainer");
+                if (data.error) {
+                    resultContainer.innerHTML = `<p class="error-message">${data.error}</p>`;
+                    resultContainer.style.display = "block";
+                } else {
+                    // 결과 영역에 데이터 표시
+                    resultContainer.style.display = "block";
+                    document.getElementById("fullJsonResult").textContent = JSON.stringify(data, null, 2);
+                    document.getElementById("dynamicMessage").textContent = `Message: ${data.dynamic_analysis.message}`;
+                    document.getElementById("isEmulator").textContent = `Is Emulator: ${data.emulator_detection.is_emulator}`;
+                    document.getElementById("fileHash").textContent = `File Hash: ${data.static_analysis.file_hash}`;
+                    document.getElementById("fileSize").textContent = `File Size: ${data.static_analysis.file_size} bytes`;
+                }
+            })
+            .catch(error => console.error("Error:", error));
+        }
+    </script>
+</body>
+</html>
